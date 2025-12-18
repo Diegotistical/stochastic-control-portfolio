@@ -4,7 +4,7 @@
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/release/python-3110/)
 [![Financial Engineering](https://img.shields.io/badge/field-Financial%20Engineering-red.svg)](#)
 
-**Stochastic-Control-Portfolio** is a high-performance computational engine designed to solve optimal decision-making problems in finance. By transforming a modular reaction-diffusion PDE framework into a Hamilton-Jacobi-Bellman (HJB) solver, this project provides a robust numerical approach to the **Merton Portfolio Problem**, determining the optimal allocation of wealth between risky and risk-free assets over a continuous-time horizon.
+**Stochastic Control Portfolio** is a high-performance computational engine designed to solve optimal decision-making problems in finance. By transforming a modular reaction-diffusion PDE framework into a Hamilton-Jacobi-Bellman (HJB) solver, this project provides a robust numerical approach to the **Merton Portfolio Problem**, determining the optimal allocation of wealth between risky and risk-free assets over a continuous-time horizon.
 
 ---
 
