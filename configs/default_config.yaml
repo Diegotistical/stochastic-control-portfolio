@@ -1,0 +1,75 @@
+# ============================================================
+#  Stochastic Control Portfolio — Default Configuration
+# ============================================================
+
+seed: 42
+output_dir: "outputs/"
+
+# --- Market dynamics (per-regime) ---
+market:
+  n_assets: 2
+  risk_free_rate: 0.03
+  mu:
+    - [0.08, 0.12]    # bull
+    - [0.02, 0.04]    # bear
+  sigma:
+    - [0.15, 0.20]    # bull
+    - [0.25, 0.35]    # bear
+  correlation:
+    - [1.0, 0.5]
+    - [0.5, 1.0]
+  transaction_cost: 0.001
+
+# --- Regime switching (hidden Markov) ---
+regime:
+  n_regimes: 2
+  generator:
+    - [-0.5,  0.5]
+    - [ 1.0, -1.0]
+  initial_distribution: [0.5, 0.5]
+
+# --- HJB PDE solver ---
+solver:
+  T: 1.0
+  n_time_steps: 200
+  n_wealth_grid: 100
+  n_belief_grid: 50
+  wealth_min: 0.01
+  wealth_max: 10.0
+  gamma: -2.0
+  tol: 1.0e-6
+  max_iterations: 1000
+  adaptive_dt: true
+  cfl_factor: 0.8
+
+# --- Robust control (Hansen–Sargent) ---
+robust:
+  enabled: true
+  theta: 0.1
+  compare_with_standard: true
+
+# --- Deep RL solver ---
+rl:
+  enabled: true
+  hidden_sizes: [128, 128, 64]
+  n_episodes: 5000
+  batch_size: 64
+  learning_rate: 3.0e-4
+  gamma_discount: 0.99
+  entropy_coef: 0.01
+  clip_epsilon: 0.2
+  n_epochs_per_update: 4
+  n_env_steps: 252
+  n_assets_rl: 2
+  checkpoint_dir: "checkpoints/"
+
+# --- Backtesting ---
+backtest:
+  enabled: true
+  tickers: ["XLF", "XLK"]
+  train_start: "2005-01-01"
+  train_end: "2015-12-31"
+  test_start: "2016-01-01"
+  test_end: "2023-12-31"
+  rebalance_freq: 21
+  initial_wealth: 1.0
