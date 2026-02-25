@@ -63,13 +63,13 @@ def analyze_scaling(
         # PDE: state space = wealth × d portfolio weights × belief
         # Grid points: N^(d+1) (wealth × d alloc dims, simplified to N^d for allocation)
         # Plus 1 belief dimension
-        total_grid = n_grid_per_dim ** (d + 1)  # wealth + d-1 allocations + belief
+        total_grid = float(n_grid_per_dim) ** (d + 1)  # wealth + d-1 allocations + belief
 
         pde_grid[i] = total_grid
         # Memory: 8 bytes per float64 × grid × (V + π + operators)
-        pde_memory[i] = total_grid * 8 * (1 + d + 3) / 1e6  # MB
+        pde_memory[i] = total_grid * 8.0 * (1 + d + 3) / 1e6  # MB
         # FLOPs per time step: O(N^d × N^d) for sparse solve, approximately O(N^{d+1})
-        pde_flops[i] = total_grid * n_grid_per_dim * n_time_steps
+        pde_flops[i] = total_grid * float(n_grid_per_dim) * n_time_steps
 
         # RL: observation = (W, π_current, belief, t) → dim = 1 + d + 2 + 1
         obs_dim = d + 4

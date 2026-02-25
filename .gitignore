@@ -17,6 +17,15 @@ data/processed/*
 !data/processed/.gitkeep
 .ipynb_checkpoints
 
+# Generated outputs
+outputs/
+checkpoints/
+
+# Build
+dist/
+build/
+*.egg-info/
+
 # IDEs
 .vscode/
 .idea/

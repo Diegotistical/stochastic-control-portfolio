@@ -104,6 +104,9 @@ class HJBSolver:
         for step in range(self.n_steps):
             t_idx = self.n_steps - step  # index counting backward
 
+            # Apply Neumann BC BEFORE computing derivatives
+            V = self.ops.apply_neumann_bc(V)
+
             # Compute derivatives
             V_x = self.ops.D1x @ V
             V_xx = self.ops.D2x @ V
@@ -128,17 +131,12 @@ class HJBSolver:
             else:
                 dt_step = dt
 
-            # Implicit diffusion matrix: (I - dt * L_diff) V^{n+1} = V^n + dt * source
-            # L_diff captures only the second-order x terms
-            # For stability, we treat the diffusion implicitly
-            sigma_bar = np.zeros(N)
-            for i_p in range(grid.Np):
-                _, sig = model._posterior_params(grid.bg.p[i_p:i_p + 1])
-                sig = sig[0]  # (d,)
-                for i_x in range(grid.Nx):
-                    k = grid.flat_index(i_x, i_p)
-                    pi = pi_star[k]
-                    sigma_bar[k] = np.sqrt(np.sum((pi * sig) ** 2))
+            # Vectorised sigma_bar computation
+            p_indices = np.arange(N) % grid.Np
+            _, sig_per_p = model._posterior_params(grid.bg.p)  # (Np, d)
+            sig_full = sig_per_p[p_indices]  # (N, d)
+            port_vol_sq = np.sum((pi_star * sig_full) ** 2, axis=1)  # (N,)
+            sigma_bar = np.sqrt(port_vol_sq)
 
             # Build diagonal diffusion coefficient
             diff_coeff = 0.5 * sigma_bar ** 2

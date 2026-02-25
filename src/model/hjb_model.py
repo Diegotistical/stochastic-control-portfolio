@@ -133,71 +133,67 @@ class HJBModel:
         d = self.n_assets
         grid = self.grid
 
-        pi_star = np.zeros((N, d))
-        H_star = np.zeros(N)
+        # Posterior parameters at each belief — (Np, d)
+        mu_bar, sigma_bar = self._posterior_params(grid.bg.p)
 
-        # Posterior parameters at each belief
-        mu_bar, sigma_bar = self._posterior_params(grid.bg.p)  # (Np, d)
+        # Broadcast to full grid (N,) by repeating per-wealth
+        # Flat indexing: k = i_x * Np + i_p, so mu_k[k] = mu_bar[k % Np]
+        p_indices = np.arange(N) % grid.Np
+        mu_full = mu_bar[p_indices]         # (N, d)
+        sig_full = sigma_bar[p_indices]     # (N, d)
 
         eps = self.params.transaction_cost
-        theta = self.params.theta  # ambiguity aversion
+        theta = self.params.theta
 
-        for i_x in range(grid.Nx):
-            for i_p in range(grid.Np):
-                k = grid.flat_index(i_x, i_p)
-                vx = V_x[k]
-                vxx = V_xx[k]
+        # Regularise V_xx to prevent sign flips at boundaries
+        # For CRRA with gamma < 0, V_xx should be negative (concave V)
+        vxx_reg = np.copy(V_xx)
+        vxx_reg = np.where(np.abs(vxx_reg) < 1e-20, -1e-20, vxx_reg)
+        # For gamma < 1 (our case), enforce concavity
+        if self.gamma < 1:
+            vxx_reg = np.minimum(vxx_reg, -1e-20)
 
-                mu_k = mu_bar[i_p]      # (d,)
-                sig_k = sigma_bar[i_p]  # (d,)
+        # Excess returns: (N, d)
+        excess = mu_full - self.r
+        vol_sq = sig_full ** 2  # (N, d) — diagonal covariance assumption
 
-                if abs(vxx) < 1e-30:
-                    # Degenerate — default to zero allocation
-                    pi_star[k] = 0.0
-                    H_star[k] = self.r * vx
-                    continue
+        # Robust control adjustment
+        if theta > 0:
+            safe_V = np.where(np.abs(V_flat) > 1e-20, V_flat, -1e-20)
+            robust_adj = vol_sq * (V_x / (theta * safe_V))[:, None]
+            excess = excess - robust_adj
 
-                # Merton-like solution (no TC): π* = -(V_x / V_xx) * Σ^{-1} (μ - r)
-                excess = mu_k - self.r
-                vol_sq = sig_k ** 2  # diagonal case
+        # Correct log-wealth FOC for optimal weights:
+        # In log-wealth x = log(W), the HJB Hamiltonian is:
+        #   H = [r + π·(μ-r) - ½π²σ²]·V_x + ½π²σ²·V_xx
+        # FOC ∂H/∂π = 0 gives:
+        #   π* = (μ-r)·V_x / [σ²·(V_x - V_xx)]
+        # This recovers π* = (μ-r)/((1-γ)σ²) for CRRA V(x) = e^(γx)/γ.
+        denom = V_x[:, None] - vxx_reg[:, None]  # (N, 1)
+        # Regularise denominator (should be γV(1-γ) > 0 for γ < 1)
+        denom = np.where(np.abs(denom) < 1e-20, np.sign(denom + 1e-30) * 1e-20, denom)
+        pi_star = excess * V_x[:, None] / (vol_sq * denom)  # (N, d)
 
-                if theta > 0:
-                    # Robust control: adjust excess return for worst-case
-                    # Under Hansen–Sargent: effective excess = μ − r − σ²·(V_x / (θ·V))
-                    # This is a simplified version; full derivation in robust_control.py
-                    v_val = V_flat[k]
-                    if abs(v_val) > 1e-30:
-                        robust_adj = vol_sq * vx / (theta * v_val)
-                        excess = excess - robust_adj
+        # Clip to wide but reasonable bounds
+        pi_star = np.clip(pi_star, -5.0, 5.0)
 
-                # Unconstrained optimal (d-dimensional diagonal case)
-                pi_unc = -(vx / vxx) * (excess / vol_sq)
+        # Apply transaction cost adjustment
+        if eps > 0 and pi_prev is not None:
+            tc_gradient = eps * np.sign(pi_star - pi_prev) * np.abs(V_x)[:, None]
+            pi_star = pi_star - tc_gradient / (vxx_reg[:, None] * vol_sq + 1e-30)
+            pi_star = np.clip(pi_star, -5.0, 5.0)
 
-                # Apply transaction cost via adjustment
-                if eps > 0 and pi_prev is not None:
-                    # With TC: penalise deviation from previous position
-                    # Simple band: if |pi_unc - pi_prev| > tc_threshold, use pi_unc
-                    # Otherwise stay at pi_prev (no-trade region)
-                    pi_p = pi_prev[k]
-                    tc_gradient = eps * np.sign(pi_unc - pi_p) * abs(vx)
-                    # Adjust by TC gradient
-                    pi_adj = pi_unc - tc_gradient / (vxx * vol_sq + 1e-30)
-                    # Clip to reasonable range
-                    pi_star[k] = np.clip(pi_adj, -2.0, 3.0)
-                else:
-                    pi_star[k] = np.clip(pi_unc, -2.0, 3.0)
+        # Evaluate explicit Hamiltonian: ADVECTION ONLY (drift · V_x)
+        # The diffusion term (½ σ² V_xx) is handled implicitly by L_diff in time_loop
+        port_vol_sq = np.sum((pi_star * sig_full) ** 2, axis=1)  # (N,)
+        drift = self.r + np.sum(pi_star * (mu_full - self.r), axis=1) - 0.5 * port_vol_sq
+        H_advection = drift * V_x
 
-                # Evaluate Hamiltonian at optimal control
-                pi = pi_star[k]
-                port_vol_sq = np.sum((pi * sig_k) ** 2)
-                drift = self.r + np.dot(pi, mu_k - self.r) - 0.5 * port_vol_sq
-                H_star[k] = drift * vx + 0.5 * port_vol_sq * vxx
+        # Subtract TC penalty
+        if eps > 0 and pi_prev is not None:
+            H_advection -= eps * np.sum(np.abs(pi_star - pi_prev), axis=1) * np.abs(V_x)
 
-                # Subtract TC if applicable
-                if eps > 0 and pi_prev is not None:
-                    H_star[k] -= eps * np.sum(np.abs(pi - pi_prev[k])) * abs(vx)
-
-        return pi_star, H_star
+        return pi_star, H_advection
 
     # ------------------------------------------------------------------
     # No-trade region detection
