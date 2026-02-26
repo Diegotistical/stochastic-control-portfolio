@@ -35,15 +35,16 @@ from src.model.grid import ProductGrid
 @dataclass
 class HJBParams:
     """Parameters for the HJB model."""
-    gamma: float                          # CRRA risk aversion
-    r: float                              # risk-free rate
-    mu: NDArray[np.float64]              # (K, d) regime drifts
-    sigma: NDArray[np.float64]           # (K, d) regime vols
-    correlation: NDArray[np.float64]     # (d, d)
-    Q: NDArray[np.float64]              # (K, K) generator matrix
-    transaction_cost: float              # proportional
+
+    gamma: float  # CRRA risk aversion
+    r: float  # risk-free rate
+    mu: NDArray[np.float64]  # (K, d) regime drifts
+    sigma: NDArray[np.float64]  # (K, d) regime vols
+    correlation: NDArray[np.float64]  # (d, d)
+    Q: NDArray[np.float64]  # (K, K) generator matrix
+    transaction_cost: float  # proportional
     # Robust control
-    theta: float = 0.0                   # ambiguity parameter (0 = standard)
+    theta: float = 0.0  # ambiguity parameter (0 = standard)
 
 
 class HJBModel:
@@ -98,7 +99,7 @@ class HJBModel:
         p = np.atleast_1d(p)
         # belief = [p, 1-p] for 2 regimes
         beliefs = np.column_stack([p, 1 - p])  # (Np, 2)
-        mu_bar = beliefs @ self.params.mu       # (Np, d)
+        mu_bar = beliefs @ self.params.mu  # (Np, d)
         sigma_bar = beliefs @ self.params.sigma  # (Np, d)
         return mu_bar, sigma_bar
 
@@ -139,8 +140,8 @@ class HJBModel:
         # Broadcast to full grid (N,) by repeating per-wealth
         # Flat indexing: k = i_x * Np + i_p, so mu_k[k] = mu_bar[k % Np]
         p_indices = np.arange(N) % grid.Np
-        mu_full = mu_bar[p_indices]         # (N, d)
-        sig_full = sigma_bar[p_indices]     # (N, d)
+        mu_full = mu_bar[p_indices]  # (N, d)
+        sig_full = sigma_bar[p_indices]  # (N, d)
 
         eps = self.params.transaction_cost
         theta = self.params.theta
@@ -155,7 +156,7 @@ class HJBModel:
 
         # Excess returns: (N, d)
         excess = mu_full - self.r
-        vol_sq = sig_full ** 2  # (N, d) — diagonal covariance assumption
+        vol_sq = sig_full**2  # (N, d) — diagonal covariance assumption
 
         # Robust control adjustment
         if theta > 0:
@@ -186,7 +187,9 @@ class HJBModel:
         # Evaluate explicit Hamiltonian: ADVECTION ONLY (drift · V_x)
         # The diffusion term (½ σ² V_xx) is handled implicitly by L_diff in time_loop
         port_vol_sq = np.sum((pi_star * sig_full) ** 2, axis=1)  # (N,)
-        drift = self.r + np.sum(pi_star * (mu_full - self.r), axis=1) - 0.5 * port_vol_sq
+        drift = (
+            self.r + np.sum(pi_star * (mu_full - self.r), axis=1) - 0.5 * port_vol_sq
+        )
         H_advection = drift * V_x
 
         # Subtract TC penalty
@@ -241,9 +244,7 @@ class HJBModel:
         q10 = Q[1, 0]  # rate from regime 1 → 0
         return q10 * (1 - p) - q01 * p
 
-    def belief_diffusion(
-        self, p: NDArray[np.float64]
-    ) -> NDArray[np.float64]:
+    def belief_diffusion(self, p: NDArray[np.float64]) -> NDArray[np.float64]:
         """Diffusion coefficient of the belief process.
 
         Squared diffusion: p²(1-p)² |h₀ - h₁|² where h_k is the
@@ -257,9 +258,9 @@ class HJBModel:
         -------
         diff_sq : (...,) array — squared diffusion coefficient
         """
-        mu = self.params.mu     # (K, d)
+        mu = self.params.mu  # (K, d)
         sigma = self.params.sigma  # (K, d)
         # h_k = mu_k / sigma_k^2 (simplified signal-to-noise)
-        h = mu / (sigma ** 2 + 1e-30)
+        h = mu / (sigma**2 + 1e-30)
         h_diff_sq = np.sum((h[0] - h[1]) ** 2)  # scalar for 2 regimes
-        return (p ** 2) * ((1 - p) ** 2) * h_diff_sq
+        return (p**2) * ((1 - p) ** 2) * h_diff_sq

@@ -21,8 +21,9 @@ from src.model.regime import HiddenMarkovRegime
 @dataclass
 class SimulationResult:
     """Container for Monte Carlo simulation output."""
-    prices: NDArray[np.float64]     # (n_paths, n_steps+1, n_assets)
-    regimes: NDArray[np.int64]      # (n_paths, n_steps+1)
+
+    prices: NDArray[np.float64]  # (n_paths, n_steps+1, n_assets)
+    regimes: NDArray[np.int64]  # (n_paths, n_steps+1)
     log_returns: NDArray[np.float64]  # (n_paths, n_steps, n_assets)
     dt: float
     n_paths: int

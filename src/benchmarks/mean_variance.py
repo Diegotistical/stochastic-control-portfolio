@@ -36,9 +36,7 @@ class MeanVarianceStrategy:
         self.gamma = gamma  # risk aversion in MV sense (positive)
         self.n_assets = len(self.mu)
 
-    def optimal_weights(
-        self, allow_short: bool = False
-    ) -> NDArray[np.float64]:
+    def optimal_weights(self, allow_short: bool = False) -> NDArray[np.float64]:
         """Compute optimal mean-variance weights.
 
         Maximise: π^T μ_excess - (γ/2) π^T Σ π
@@ -68,8 +66,7 @@ class MeanVarianceStrategy:
         x0 = np.ones(self.n_assets) / (self.n_assets + 1)
 
         result = minimize(
-            neg_utility, x0, bounds=bounds,
-            constraints=constraints, method="SLSQP"
+            neg_utility, x0, bounds=bounds, constraints=constraints, method="SLSQP"
         )
         return result.x
 
@@ -95,18 +92,25 @@ class MeanVarianceStrategy:
         weights = np.empty((n_points, self.n_assets))
 
         for i, target in enumerate(targets):
+
             def portfolio_var(w):
                 return w @ self.cov @ w
 
             constraints = [
-                {"type": "eq", "fun": lambda w, t=target: w @ self.mu + (1 - w.sum()) * self.r - t},
+                {
+                    "type": "eq",
+                    "fun": lambda w, t=target: w @ self.mu + (1 - w.sum()) * self.r - t,
+                },
             ]
             bounds = [(0, 1)] * self.n_assets
             x0 = np.ones(self.n_assets) / (self.n_assets + 1)
 
             result = minimize(
-                portfolio_var, x0, bounds=bounds,
-                constraints=constraints, method="SLSQP"
+                portfolio_var,
+                x0,
+                bounds=bounds,
+                constraints=constraints,
+                method="SLSQP",
             )
             weights[i] = result.x
             vols[i] = np.sqrt(result.fun)

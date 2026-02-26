@@ -19,7 +19,7 @@ class TestMertonStrategy:
         merton = MertonStrategy(mu, sigma, r, gamma)
         pi = merton.optimal_weights()
 
-        expected = (mu - r) / ((1 - gamma) * sigma ** 2)
+        expected = (mu - r) / ((1 - gamma) * sigma**2)
         np.testing.assert_allclose(pi, expected)
 
     def test_certainty_equivalent_positive(self):

@@ -49,7 +49,7 @@ class TestFDOperators:
     def test_second_deriv_quadratic(self):
         """D2 of f(x) = x² should be ≈ 2."""
         x = np.linspace(0, 5, 100)
-        f = x ** 2
+        f = x**2
         D2 = _second_deriv_1d(x)
         d2f = D2 @ f
         np.testing.assert_allclose(d2f[2:-2], 2.0, atol=0.1)
@@ -57,7 +57,7 @@ class TestFDOperators:
     def test_second_deriv_cubic(self):
         """D2 of f(x) = x³ should be ≈ 6x."""
         x = np.linspace(1, 5, 200)
-        f = x ** 3
+        f = x**3
         D2 = _second_deriv_1d(x)
         d2f = D2 @ f
         expected = 6 * x

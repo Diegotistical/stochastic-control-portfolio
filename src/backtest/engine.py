@@ -17,6 +17,7 @@ from numpy.typing import NDArray
 
 class Strategy(Protocol):
     """Protocol for strategy callable."""
+
     def __call__(
         self,
         returns_history: NDArray[np.float64],
@@ -29,6 +30,7 @@ class Strategy(Protocol):
 @dataclass
 class BacktestResult:
     """Container for backtesting output."""
+
     dates: list
     wealth_path: NDArray[np.float64]
     weights_history: NDArray[np.float64]
@@ -102,7 +104,7 @@ class BacktestEngine:
         for t in range(T):
             # Rebalance?
             if t % self.rebalance_freq == 0 and t >= lookback:
-                history = ret_values[max(0, t - lookback):t]
+                history = ret_values[max(0, t - lookback) : t]
                 target_weights = strategy_fn(history, current_weights)
                 target_weights = np.clip(target_weights, 0, None)
                 if target_weights.sum() > 1:

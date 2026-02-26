@@ -24,6 +24,7 @@
 
 # %%
 import os, sys
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import numpy as np
@@ -32,12 +33,14 @@ from matplotlib import cm
 
 os.makedirs("outputs", exist_ok=True)
 
-plt.rcParams.update({
-    "figure.figsize": (10, 5),
-    "font.size": 12,
-    "axes.grid": True,
-    "grid.alpha": 0.3,
-})
+plt.rcParams.update(
+    {
+        "figure.figsize": (10, 5),
+        "font.size": 12,
+        "axes.grid": True,
+        "grid.alpha": 0.3,
+    }
+)
 
 # %% [markdown]
 # ## 1. Market Simulation with Regime Switching
@@ -67,7 +70,9 @@ for idx, name in enumerate(["Asset 1", "Asset 2"]):
     ax.set_xlabel("Trading Day")
     ax.set_ylabel("Price")
 axes[0].legend(["Bull start", "Bear start"], loc="upper left")
-plt.suptitle("Simulated Price Paths with Regime Switching", fontsize=14, fontweight="bold")
+plt.suptitle(
+    "Simulated Price Paths with Regime Switching", fontsize=14, fontweight="bold"
+)
 plt.tight_layout()
 plt.savefig("outputs/demo_price_paths.png", dpi=150, bbox_inches="tight")
 plt.show()
@@ -88,9 +93,14 @@ gamma = -2.0
 r = market_cfg.risk_free_rate
 
 params = HJBParams(
-    gamma=gamma, r=r, mu=mu, sigma=sigma,
-    correlation=rho, Q=Q,
-    transaction_cost=0.0, theta=0.0,
+    gamma=gamma,
+    r=r,
+    mu=mu,
+    sigma=sigma,
+    correlation=rho,
+    Q=Q,
+    transaction_cost=0.0,
+    theta=0.0,
 )
 
 wg = WealthGrid(W_min=0.5, W_max=3.0, N=80, stretch=0.0)
@@ -111,8 +121,9 @@ print(f"Final residual: {solution.residuals[-1]:.2e}")
 V_2d = grid.to_2d(solution.V[0])
 
 fig, ax = plt.subplots(subplot_kw={"projection": "3d"}, figsize=(10, 7))
-surf = ax.plot_surface(grid.X, grid.P, V_2d, cmap=cm.viridis,
-                        linewidth=0, antialiased=True, alpha=0.8)
+surf = ax.plot_surface(
+    grid.X, grid.P, V_2d, cmap=cm.viridis, linewidth=0, antialiased=True, alpha=0.8
+)
 ax.set_xlabel("log(W)")
 ax.set_ylabel("Belief p (P[bull])")
 ax.set_zlabel("V(W, p, 0)")
@@ -201,7 +212,9 @@ from src.model.robust_control import RobustController
 thetas = [0.05, 0.1, 0.2, 0.5, 1.0, 5.0]
 
 print("--- Robust vs Standard Allocations ---")
-print(f"  {'θ':>8s}  {'π1_std':>8s}  {'π1_rob':>8s}  {'π2_std':>8s}  {'π2_rob':>8s}  {'shrink':>8s}")
+print(
+    f"  {'θ':>8s}  {'π1_std':>8s}  {'π1_rob':>8s}  {'π2_std':>8s}  {'π2_rob':>8s}  {'shrink':>8s}"
+)
 
 results = []
 for theta in thetas:
@@ -209,7 +222,9 @@ for theta in thetas:
     pi_std, pi_rob = rc.compare_allocations(mu_bull, sigma_bull)
     shrinkage = 1 - np.linalg.norm(pi_rob) / np.linalg.norm(pi_std)
     results.append((theta, pi_std, pi_rob, shrinkage))
-    print(f"  {theta:8.2f}  {pi_std[0]:8.4f}  {pi_rob[0]:8.4f}  {pi_std[1]:8.4f}  {pi_rob[1]:8.4f}  {shrinkage:7.1%}")
+    print(
+        f"  {theta:8.2f}  {pi_std[0]:8.4f}  {pi_rob[0]:8.4f}  {pi_std[1]:8.4f}  {pi_rob[1]:8.4f}  {shrinkage:7.1%}"
+    )
 
 # %%
 fig, ax = plt.subplots(figsize=(10, 5))
@@ -219,11 +234,27 @@ rob_a2 = [r[2][1] for r in results]
 
 ax.plot(theta_vals, rob_a1, "o-", label="Asset 1 (Robust)", linewidth=2)
 ax.plot(theta_vals, rob_a2, "s-", label="Asset 2 (Robust)", linewidth=2)
-ax.axhline(y=pi_merton[0], linestyle="--", color="tab:blue", alpha=0.5, label=f"Merton Asset 1 ({pi_merton[0]:.3f})")
-ax.axhline(y=pi_merton[1], linestyle="--", color="tab:orange", alpha=0.5, label=f"Merton Asset 2 ({pi_merton[1]:.3f})")
+ax.axhline(
+    y=pi_merton[0],
+    linestyle="--",
+    color="tab:blue",
+    alpha=0.5,
+    label=f"Merton Asset 1 ({pi_merton[0]:.3f})",
+)
+ax.axhline(
+    y=pi_merton[1],
+    linestyle="--",
+    color="tab:orange",
+    alpha=0.5,
+    label=f"Merton Asset 2 ({pi_merton[1]:.3f})",
+)
 ax.set_xlabel("θ (ambiguity aversion, higher = less averse)")
 ax.set_ylabel("Portfolio Weight")
-ax.set_title("Robust Allocation Shrinkage vs Ambiguity Parameter θ", fontsize=14, fontweight="bold")
+ax.set_title(
+    "Robust Allocation Shrinkage vs Ambiguity Parameter θ",
+    fontsize=14,
+    fontweight="bold",
+)
 ax.legend()
 ax.set_xscale("log")
 plt.tight_layout()
@@ -244,7 +275,9 @@ result = analyze_scaling(
 fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 
 ax = axes[0]
-ax.semilogy(result.dimensions, result.pde_grid_sizes, "o-", color="crimson", linewidth=2)
+ax.semilogy(
+    result.dimensions, result.pde_grid_sizes, "o-", color="crimson", linewidth=2
+)
 ax.set_xlabel("Number of Assets (d)")
 ax.set_ylabel("Grid Points")
 ax.set_title("PDE: Curse of Dimensionality")

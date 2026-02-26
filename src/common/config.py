@@ -22,26 +22,34 @@ from src.exceptions import ConfigValidationError
 # Dataclass definitions
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class MarketConfig:
     """Parameters for multi-asset GBM dynamics."""
+
     n_assets: int = 2
     risk_free_rate: float = 0.03
     # Per-regime drift vectors: shape (n_regimes, n_assets)
-    mu: list[list[float]] = field(default_factory=lambda: [
-        [0.08, 0.12],   # bull regime
-        [0.02, 0.04],   # bear regime
-    ])
+    mu: list[list[float]] = field(
+        default_factory=lambda: [
+            [0.08, 0.12],  # bull regime
+            [0.02, 0.04],  # bear regime
+        ]
+    )
     # Per-regime volatility vectors: shape (n_regimes, n_assets)
-    sigma: list[list[float]] = field(default_factory=lambda: [
-        [0.15, 0.20],
-        [0.25, 0.35],
-    ])
+    sigma: list[list[float]] = field(
+        default_factory=lambda: [
+            [0.15, 0.20],
+            [0.25, 0.35],
+        ]
+    )
     # Correlation matrix (constant across regimes for simplicity)
-    correlation: list[list[float]] = field(default_factory=lambda: [
-        [1.0, 0.5],
-        [0.5, 1.0],
-    ])
+    correlation: list[list[float]] = field(
+        default_factory=lambda: [
+            [1.0, 0.5],
+            [0.5, 1.0],
+        ]
+    )
     # Transaction cost rate (proportional)
     transaction_cost: float = 0.001
 
@@ -73,18 +81,23 @@ class MarketConfig:
             raise ConfigValidationError("correlation matrix must be symmetric")
         eigvals = np.linalg.eigvalsh(corr)
         if np.any(eigvals < -1e-10):
-            raise ConfigValidationError("correlation matrix must be positive semi-definite")
+            raise ConfigValidationError(
+                "correlation matrix must be positive semi-definite"
+            )
 
 
 @dataclass
 class RegimeConfig:
     """Parameters for the hidden Markov regime-switching model."""
+
     n_regimes: int = 2
     # Generator matrix Q: shape (n_regimes, n_regimes), rows sum to 0
-    generator: list[list[float]] = field(default_factory=lambda: [
-        [-0.5, 0.5],
-        [1.0, -1.0],
-    ])
+    generator: list[list[float]] = field(
+        default_factory=lambda: [
+            [-0.5, 0.5],
+            [1.0, -1.0],
+        ]
+    )
     # Initial regime probability distribution
     initial_distribution: list[float] = field(default_factory=lambda: [0.5, 0.5])
 
@@ -103,7 +116,9 @@ class RegimeConfig:
             raise ConfigValidationError("diagonal of generator must be non-positive")
         p0 = np.array(self.initial_distribution)
         if len(p0) != self.n_regimes:
-            raise ConfigValidationError("initial_distribution length must match n_regimes")
+            raise ConfigValidationError(
+                "initial_distribution length must match n_regimes"
+            )
         if not np.isclose(p0.sum(), 1.0):
             raise ConfigValidationError("initial_distribution must sum to 1")
 
@@ -111,6 +126,7 @@ class RegimeConfig:
 @dataclass
 class SolverConfig:
     """Parameters for the HJB PDE solver."""
+
     # Time horizon
     T: float = 1.0
     # Number of time steps
@@ -137,7 +153,9 @@ class SolverConfig:
         if self.gamma == 0:
             raise ConfigValidationError("gamma must be nonzero for CRRA utility")
         if self.gamma >= 1:
-            raise ConfigValidationError("gamma must be < 1 for CRRA (typically negative)")
+            raise ConfigValidationError(
+                "gamma must be < 1 for CRRA (typically negative)"
+            )
         if self.wealth_min <= 0:
             raise ConfigValidationError("wealth_min must be positive")
         if self.wealth_max <= self.wealth_min:
@@ -147,6 +165,7 @@ class SolverConfig:
 @dataclass
 class RobustConfig:
     """Parameters for Hansen-Sargent ambiguity aversion."""
+
     enabled: bool = True
     # Ambiguity aversion parameter (theta > 0; larger = less ambiguity averse)
     theta: float = 0.1
@@ -155,12 +174,15 @@ class RobustConfig:
 
     def validate(self) -> None:
         if self.enabled and self.theta <= 0:
-            raise ConfigValidationError("theta must be positive when robust control is enabled")
+            raise ConfigValidationError(
+                "theta must be positive when robust control is enabled"
+            )
 
 
 @dataclass
 class RLConfig:
     """Parameters for the Deep RL solver."""
+
     enabled: bool = True
     # Network architecture
     hidden_sizes: list[int] = field(default_factory=lambda: [128, 128, 64])
@@ -188,6 +210,7 @@ class RLConfig:
 @dataclass
 class BacktestConfig:
     """Parameters for backtesting."""
+
     enabled: bool = True
     # Tickers for historical data
     tickers: list[str] = field(default_factory=lambda: ["XLF", "XLK"])
@@ -211,6 +234,7 @@ class BacktestConfig:
 @dataclass
 class PipelineConfig:
     """Top-level configuration aggregating all sub-configs."""
+
     market: MarketConfig = field(default_factory=MarketConfig)
     regime: RegimeConfig = field(default_factory=RegimeConfig)
     solver: SolverConfig = field(default_factory=SolverConfig)
@@ -241,9 +265,11 @@ class PipelineConfig:
 # YAML I/O
 # ---------------------------------------------------------------------------
 
+
 def _nested_dataclass_from_dict(cls: type, data: dict[str, Any]) -> Any:
     """Recursively instantiate nested dataclasses from dict."""
     from dataclasses import fields as dc_fields
+
     fieldtypes = {f.name: f.type for f in dc_fields(cls)}
     kwargs = {}
     for k, v in data.items():
@@ -278,6 +304,7 @@ def load_config(path: str | Path) -> PipelineConfig:
 def save_config(cfg: PipelineConfig, path: str | Path) -> None:
     """Save configuration to a YAML file."""
     from dataclasses import asdict
+
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     data = asdict(cfg)
@@ -288,10 +315,12 @@ def save_config(cfg: PipelineConfig, path: str | Path) -> None:
 def set_global_seed(seed: int) -> None:
     """Set seeds for numpy, torch, and python random for reproducibility."""
     import random
+
     random.seed(seed)
     np.random.seed(seed)
     try:
         import torch
+
         torch.manual_seed(seed)
         if torch.cuda.is_available():
             torch.cuda.manual_seed_all(seed)

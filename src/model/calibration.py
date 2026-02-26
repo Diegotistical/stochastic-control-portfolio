@@ -20,14 +20,15 @@ from src.exceptions import CalibrationError
 @dataclass
 class CalibrationResult:
     """Container for HMM calibration output."""
-    mu: NDArray[np.float64]              # (K, d) regime-dependent means
-    sigma: NDArray[np.float64]           # (K, d) regime-dependent vols
-    covariances: NDArray[np.float64]     # (K, d, d) full covariance matrices
-    generator: NDArray[np.float64]       # (K, K) estimated generator matrix
+
+    mu: NDArray[np.float64]  # (K, d) regime-dependent means
+    sigma: NDArray[np.float64]  # (K, d) regime-dependent vols
+    covariances: NDArray[np.float64]  # (K, d, d) full covariance matrices
+    generator: NDArray[np.float64]  # (K, K) estimated generator matrix
     transition_matrix: NDArray[np.float64]  # (K, K) one-step transition
     stationary_distribution: NDArray[np.float64]  # (K,)
     log_likelihood: float
-    regime_probs: NDArray[np.float64]    # (T, K) smoothed regime probabilities
+    regime_probs: NDArray[np.float64]  # (T, K) smoothed regime probabilities
     n_regimes: int
 
 
@@ -107,7 +108,9 @@ class HMMCalibrator:
         mu = model.means_  # (K, d)
         covariances = model.covars_  # (K, d, d)
         # Extract diagonal volatilities
-        sigma = np.sqrt(np.array([np.diag(covariances[k]) for k in range(self.n_regimes)]))
+        sigma = np.sqrt(
+            np.array([np.diag(covariances[k]) for k in range(self.n_regimes)])
+        )
 
         # Transition matrix (one-step, dt-frequency)
         P = model.transmat_  # (K, K)
@@ -134,9 +137,7 @@ class HMMCalibrator:
         )
 
     @staticmethod
-    def _estimate_generator(
-        P: NDArray[np.float64], dt: float
-    ) -> NDArray[np.float64]:
+    def _estimate_generator(P: NDArray[np.float64], dt: float) -> NDArray[np.float64]:
         """Estimate CTMC generator from transition matrix via matrix logarithm.
 
         Q = logm(P) / dt

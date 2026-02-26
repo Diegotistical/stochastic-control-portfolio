@@ -52,15 +52,12 @@ class RiskParityStrategy:
         constraints = [{"type": "eq", "fun": lambda w: w.sum() - 1}]
 
         result = minimize(
-            objective, x0, bounds=bounds,
-            constraints=constraints, method="SLSQP"
+            objective, x0, bounds=bounds, constraints=constraints, method="SLSQP"
         )
 
         return result.x
 
-    def risk_contributions(
-        self, w: NDArray[np.float64]
-    ) -> NDArray[np.float64]:
+    def risk_contributions(self, w: NDArray[np.float64]) -> NDArray[np.float64]:
         """Compute risk contribution of each asset.
 
         Parameters

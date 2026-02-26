@@ -24,10 +24,11 @@ from numpy.typing import NDArray
 @dataclass
 class MertonSolution:
     """Container for Merton closed-form solution."""
-    pi_star: NDArray[np.float64]       # (d,) optimal weights
-    expected_utility: float           # E[U(W_T)]
-    certainty_equivalent: float       # CE wealth
-    value_function_coef: float        # coefficient A in exp(A*(T-t))
+
+    pi_star: NDArray[np.float64]  # (d,) optimal weights
+    expected_utility: float  # E[U(W_T)]
+    certainty_equivalent: float  # CE wealth
+    value_function_coef: float  # coefficient A in exp(A*(T-t))
 
 
 class MertonStrategy:
@@ -62,7 +63,7 @@ class MertonStrategy:
         pi_star : (d,) optimal fraction in each risky asset
         """
         excess = self.mu - self.r
-        vol_sq = self.sigma ** 2
+        vol_sq = self.sigma**2
         return excess / ((1 - self.gamma) * vol_sq)
 
     def value_function(
@@ -118,7 +119,7 @@ class MertonStrategy:
 
         A = gamma * (self.r + port_excess - 0.5 * (1 - gamma) * port_vol_sq)
 
-        V0 = (W0 ** gamma / gamma) * np.exp(A * T)
+        V0 = (W0**gamma / gamma) * np.exp(A * T)
         # Certainty equivalent: W_CE such that U(W_CE) = V0
         # W_CE^γ / γ = V0 → W_CE = (γ V0)^(1/γ)
         CE = (gamma * V0) ** (1 / gamma)
@@ -153,7 +154,11 @@ class MertonStrategy:
         for t in range(n_steps):
             Z = rng.standard_normal((n_paths, self.n_assets))
             # Portfolio log-return
-            port_drift = self.r + np.dot(pi, self.mu - self.r) - 0.5 * np.sum((pi * self.sigma) ** 2)
+            port_drift = (
+                self.r
+                + np.dot(pi, self.mu - self.r)
+                - 0.5 * np.sum((pi * self.sigma) ** 2)
+            )
             port_vol = np.sqrt(np.sum((pi * self.sigma) ** 2))
             log_ret = port_drift * dt + port_vol * np.sqrt(dt) * Z[:, 0]
             wealth[:, t + 1] = wealth[:, t] * np.exp(log_ret)

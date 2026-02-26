@@ -86,11 +86,13 @@ def _second_deriv_1d(
         h_r = x[i + 1] - x[i]
         denom = 0.5 * (h_l + h_r)
 
-        data.extend([
-            1.0 / (h_l * denom),
-            -1.0 / (h_l * denom) - 1.0 / (h_r * denom),
-            1.0 / (h_r * denom),
-        ])
+        data.extend(
+            [
+                1.0 / (h_l * denom),
+                -1.0 / (h_l * denom) - 1.0 / (h_r * denom),
+                1.0 / (h_r * denom),
+            ]
+        )
         row.extend([i, i, i])
         col.extend([i - 1, i, i + 1])
 

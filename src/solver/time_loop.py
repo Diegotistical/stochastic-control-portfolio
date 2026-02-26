@@ -27,9 +27,10 @@ from src.solver.monitor import ConvergenceMonitor
 @dataclass
 class HJBSolution:
     """Container for the HJB solver output."""
-    V: NDArray[np.float64]              # (n_time, Nx*Np) value function at each time
-    pi_star: NDArray[np.float64]        # (n_time, Nx*Np, d) optimal control
-    times: NDArray[np.float64]          # (n_time,) time points
+
+    V: NDArray[np.float64]  # (n_time, Nx*Np) value function at each time
+    pi_star: NDArray[np.float64]  # (n_time, Nx*Np, d) optimal control
+    times: NDArray[np.float64]  # (n_time,) time points
     grid: ProductGrid
     converged: bool
     residuals: list[float]
@@ -139,7 +140,7 @@ class HJBSolver:
             sigma_bar = np.sqrt(port_vol_sq)
 
             # Build diagonal diffusion coefficient
-            diff_coeff = 0.5 * sigma_bar ** 2
+            diff_coeff = 0.5 * sigma_bar**2
             L_diff = sp.diags(diff_coeff) @ self.ops.D2x
 
             # Implicit system: (I - dt * L_diff) V_new = V + dt * source
@@ -153,9 +154,7 @@ class HJBSolver:
             try:
                 V_new = spla.spsolve(A_implicit.tocsc(), rhs)
             except Exception as e:
-                raise NumericalInstabilityError(
-                    f"Sparse solve failed: {e}", step=step
-                )
+                raise NumericalInstabilityError(f"Sparse solve failed: {e}", step=step)
 
             # Stability check
             if np.any(np.isnan(V_new)) or np.any(np.isinf(V_new)):
@@ -212,8 +211,8 @@ class HJBSolver:
         mu_max = np.max(np.abs(self.model.params.mu))
         a_max = self.model.r + pi_max * mu_max
 
-        dt_diff = dx_min ** 2 / (2 * D_max + 1e-30)
+        dt_diff = dx_min**2 / (2 * D_max + 1e-30)
         dt_adv = dx_min / (a_max + 1e-30)
-        dt_belief = dp_min ** 2 / (2 * np.max(np.abs(self.model.params.Q)) + 1e-30)
+        dt_belief = dp_min**2 / (2 * np.max(np.abs(self.model.params.Q)) + 1e-30)
 
         return self.cfl_factor * min(dt_diff, dt_adv, dt_belief)

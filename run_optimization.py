@@ -31,27 +31,36 @@ def parse_args() -> argparse.Namespace:
         description="Deep Stochastic Control Portfolio Optimization"
     )
     parser.add_argument(
-        "--config", type=str, default="configs/default_config.yaml",
+        "--config",
+        type=str,
+        default="configs/default_config.yaml",
         help="Path to YAML configuration file",
     )
     parser.add_argument(
-        "--solver", type=str, choices=["hjb", "rl", "both"], default="hjb",
+        "--solver",
+        type=str,
+        choices=["hjb", "rl", "both"],
+        default="hjb",
         help="Which solver to run",
     )
     parser.add_argument(
-        "--backtest", action="store_true",
+        "--backtest",
+        action="store_true",
         help="Run historical backtesting",
     )
     parser.add_argument(
-        "--sensitivity", action="store_true",
+        "--sensitivity",
+        action="store_true",
         help="Run sensitivity analysis",
     )
     parser.add_argument(
-        "--robust", action="store_true",
+        "--robust",
+        action="store_true",
         help="Run robust control comparison",
     )
     parser.add_argument(
-        "--complexity", action="store_true",
+        "--complexity",
+        action="store_true",
         help="Run complexity analysis (PDE vs RL scaling)",
     )
     return parser.parse_args()
@@ -107,9 +116,12 @@ def main() -> None:
 
     # Plot filter accuracy for first path
     from src.viz.static import plot_filter_accuracy
+
     plot_filter_accuracy(
-        beliefs[0], sim_result.regimes[0],
-        sim_result.dt, save_path=str(output_dir / "filter_accuracy.png"),
+        beliefs[0],
+        sim_result.regimes[0],
+        sim_result.dt,
+        save_path=str(output_dir / "filter_accuracy.png"),
     )
 
     # ------------------------------------------------------------------
@@ -119,7 +131,11 @@ def main() -> None:
         from src.model.grid import WealthGrid, BeliefGrid, ProductGrid
         from src.model.hjb_model import HJBModel, HJBParams
         from src.solver.time_loop import HJBSolver
-        from src.viz.static import plot_value_surface, plot_optimal_control, plot_convergence
+        from src.viz.static import (
+            plot_value_surface,
+            plot_optimal_control,
+            plot_convergence,
+        )
 
         logger.info("Setting up HJB PDE solver...")
 
@@ -143,7 +159,8 @@ def main() -> None:
         )
         model = HJBModel(hjb_params, grid)
         solver = HJBSolver(
-            model, grid,
+            model,
+            grid,
             T=cfg.solver.T,
             n_steps=cfg.solver.n_time_steps,
             tol=cfg.solver.tol,
@@ -165,9 +182,15 @@ def main() -> None:
         else:
             pi_t0_2d = grid.to_2d(pi_t0)
 
-        plot_value_surface(V_t0, wg.x, bg.p, save_path=str(output_dir / "value_surface.png"))
-        plot_optimal_control(pi_t0_2d, wg.x, bg.p, save_path=str(output_dir / "optimal_control.png"))
-        plot_convergence(solution.residuals, save_path=str(output_dir / "convergence.png"))
+        plot_value_surface(
+            V_t0, wg.x, bg.p, save_path=str(output_dir / "value_surface.png")
+        )
+        plot_optimal_control(
+            pi_t0_2d, wg.x, bg.p, save_path=str(output_dir / "optimal_control.png")
+        )
+        plot_convergence(
+            solution.residuals, save_path=str(output_dir / "convergence.png")
+        )
 
     # ------------------------------------------------------------------
     # 5. Deep RL Solver
@@ -239,7 +262,8 @@ def main() -> None:
         logger.info(f"Exposure reduction:  {1 - np.abs(pi_rob)/np.abs(pi_std)}")
 
         plot_robust_comparison(
-            pi_std, pi_rob,
+            pi_std,
+            pi_rob,
             labels=[f"Asset {i+1}" for i in range(len(pi_std))],
             save_path=str(output_dir / "robust_comparison.png"),
         )
@@ -256,7 +280,9 @@ def main() -> None:
         print(format_complexity_table(cx))
 
         plot_complexity_scaling(
-            cx.dimensions, cx.pde_flops, cx.rl_flops_per_step,
+            cx.dimensions,
+            cx.pde_flops,
+            cx.rl_flops_per_step,
             save_path=str(output_dir / "complexity_scaling.png"),
         )
 
@@ -268,7 +294,9 @@ def main() -> None:
     mu_avg = np.array(cfg.market.mu).mean(axis=0)
     sigma_avg = np.array(cfg.market.sigma).mean(axis=0)
 
-    merton = MertonStrategy(mu_avg, sigma_avg, cfg.market.risk_free_rate, cfg.solver.gamma)
+    merton = MertonStrategy(
+        mu_avg, sigma_avg, cfg.market.risk_free_rate, cfg.solver.gamma
+    )
     merton_sol = merton.solve(W0=1.0, T=cfg.solver.T)
     logger.info(f"Merton optimal weights: {merton_sol.pi_star}")
     logger.info(f"Merton CE wealth: {merton_sol.certainty_equivalent:.4f}")
@@ -300,9 +328,12 @@ def main() -> None:
 
         # Define strategies as callables
         def merton_strategy(hist, cur_w):
-            ms = MertonStrategy(cal_result.mu.mean(axis=0),
-                                np.sqrt(np.diag(cal_result.covariances.mean(axis=0))),
-                                cfg.market.risk_free_rate, cfg.solver.gamma)
+            ms = MertonStrategy(
+                cal_result.mu.mean(axis=0),
+                np.sqrt(np.diag(cal_result.covariances.mean(axis=0))),
+                cfg.market.risk_free_rate,
+                cfg.solver.gamma,
+            )
             return np.clip(ms.optimal_weights(), 0, 1)
 
         def mv_strategy(hist, cur_w):
@@ -330,8 +361,10 @@ def main() -> None:
         comparison_data = {}
         for name, bt_result in results.items():
             metrics = compute_metrics(
-                bt_result.returns, bt_result.wealth_path,
-                bt_result.turnover, bt_result.transaction_costs,
+                bt_result.returns,
+                bt_result.wealth_path,
+                bt_result.turnover,
+                bt_result.transaction_costs,
             )
             comparison_data[name] = {
                 "wealth": bt_result.wealth_path,
@@ -343,7 +376,9 @@ def main() -> None:
                     "sortino_ratio": metrics.sortino_ratio,
                 },
             }
-            logger.info(f"{name}: Sharpe={metrics.sharpe_ratio:.2f}, MaxDD={metrics.max_drawdown:.2%}")
+            logger.info(
+                f"{name}: Sharpe={metrics.sharpe_ratio:.2f}, MaxDD={metrics.max_drawdown:.2%}"
+            )
 
         plot_benchmark_comparison(
             comparison_data, save_path=str(output_dir / "backtest_comparison.png")

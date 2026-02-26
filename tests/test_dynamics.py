@@ -12,7 +12,7 @@ class TestMultiAssetGBM:
 
     @pytest.fixture
     def gbm(self):
-        mu = np.array([[0.08, 0.12]])   # single regime
+        mu = np.array([[0.08, 0.12]])  # single regime
         sigma = np.array([[0.15, 0.20]])
         corr = np.array([[1.0, 0.5], [0.5, 1.0]])
         return MultiAssetGBM(mu, sigma, corr, risk_free_rate=0.03)

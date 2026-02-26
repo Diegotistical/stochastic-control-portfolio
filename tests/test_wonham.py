@@ -46,14 +46,18 @@ class TestWonhamFilter:
         dt = 1 / 252
         n_steps = 2000
         # True data from regime 0
-        log_ret = (mu[0] - 0.5 * sigma[0] ** 2) * dt + sigma[0] * np.sqrt(dt) * rng.standard_normal((n_steps, 2))
+        log_ret = (mu[0] - 0.5 * sigma[0] ** 2) * dt + sigma[0] * np.sqrt(
+            dt
+        ) * rng.standard_normal((n_steps, 2))
 
         wf = WonhamFilter(Q, mu, sigma, corr)
         beliefs = wf.filter(log_ret, dt, p0=np.array([0.5, 0.5]))
 
         # After many observations from regime 0, belief in regime 0 should be high
         final_belief = beliefs[-1, 0]
-        assert final_belief > 0.6, f"Filter did not converge: P(regime 0) = {final_belief:.3f}"
+        assert (
+            final_belief > 0.6
+        ), f"Filter did not converge: P(regime 0) = {final_belief:.3f}"
 
     def test_posterior_params_shape(self, setup):
         """Posterior-averaged params should have correct dimensions."""

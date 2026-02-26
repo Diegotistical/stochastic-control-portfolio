@@ -37,8 +37,8 @@ class MultiAssetGBM:
         correlation: NDArray[np.float64],
         risk_free_rate: float = 0.03,
     ):
-        self.mu = np.asarray(mu, dtype=np.float64)        # (K, d)
-        self.sigma = np.asarray(sigma, dtype=np.float64)   # (K, d)
+        self.mu = np.asarray(mu, dtype=np.float64)  # (K, d)
+        self.sigma = np.asarray(sigma, dtype=np.float64)  # (K, d)
         self.corr = np.asarray(correlation, dtype=np.float64)
         self.r = risk_free_rate
         self.n_regimes, self.n_assets = self.mu.shape
@@ -71,8 +71,8 @@ class MultiAssetGBM:
         S_next : (n_paths, d) array
             Updated asset prices (floored at 1e-12 to avoid negativity).
         """
-        mu_k = self.mu[regimes]       # (n_paths, d)
-        sigma_k = self.sigma[regimes] # (n_paths, d)
+        mu_k = self.mu[regimes]  # (n_paths, d)
+        sigma_k = self.sigma[regimes]  # (n_paths, d)
 
         drift = mu_k * dt
         diffusion = sigma_k * dW
@@ -113,9 +113,7 @@ class MultiAssetGBM:
         S[:, 0, :] = S0[None, :]
 
         for t in range(n_steps):
-            S[:, t + 1, :] = self.step(
-                S[:, t, :], regimes[:, t], dW[:, t, :], dt
-            )
+            S[:, t + 1, :] = self.step(S[:, t, :], regimes[:, t], dW[:, t, :], dt)
         return S
 
     # ------------------------------------------------------------------

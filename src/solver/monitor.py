@@ -64,7 +64,7 @@ class ConvergenceMonitor:
 
         # Oscillation detection
         if len(self.residuals) >= self.oscillation_window:
-            window = self.residuals[-self.oscillation_window:]
+            window = self.residuals[-self.oscillation_window :]
             diffs = np.diff(window)
             sign_changes = np.sum(np.diff(np.sign(diffs)) != 0)
             if sign_changes > self.oscillation_window * 0.7:

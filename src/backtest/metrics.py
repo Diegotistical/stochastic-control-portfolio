@@ -15,6 +15,7 @@ from numpy.typing import NDArray
 @dataclass
 class PerformanceMetrics:
     """Container for strategy performance statistics."""
+
     annualised_return: float
     annualised_volatility: float
     sharpe_ratio: float
@@ -26,8 +27,8 @@ class PerformanceMetrics:
     total_transaction_costs: float
     skewness: float
     kurtosis: float
-    var_95: float           # 5% Value at Risk (daily)
-    cvar_95: float          # 5% Conditional VaR (daily)
+    var_95: float  # 5% Value at Risk (daily)
+    cvar_95: float  # 5% Conditional VaR (daily)
     final_wealth: float
 
 
@@ -57,11 +58,20 @@ def compute_metrics(
     if active.sum() < 2:
         # Not enough data
         return PerformanceMetrics(
-            annualised_return=0, annualised_volatility=0,
-            sharpe_ratio=0, sortino_ratio=0, max_drawdown=0,
-            calmar_ratio=0, total_turnover=0, avg_turnover_per_rebalance=0,
-            total_transaction_costs=0, skewness=0, kurtosis=0,
-            var_95=0, cvar_95=0, final_wealth=wealth[-1],
+            annualised_return=0,
+            annualised_volatility=0,
+            sharpe_ratio=0,
+            sortino_ratio=0,
+            max_drawdown=0,
+            calmar_ratio=0,
+            total_turnover=0,
+            avg_turnover_per_rebalance=0,
+            total_transaction_costs=0,
+            skewness=0,
+            kurtosis=0,
+            var_95=0,
+            cvar_95=0,
+            final_wealth=wealth[-1],
         )
 
     r = returns[active]
@@ -72,7 +82,11 @@ def compute_metrics(
 
     # Sortino (downside deviation)
     downside = r[r < 0]
-    down_vol = np.std(downside, ddof=1) * np.sqrt(periods_per_year) if len(downside) > 1 else 1e-10
+    down_vol = (
+        np.std(downside, ddof=1) * np.sqrt(periods_per_year)
+        if len(downside) > 1
+        else 1e-10
+    )
     sortino = ann_ret / down_vol if down_vol > 1e-10 else 0.0
 
     # Max drawdown

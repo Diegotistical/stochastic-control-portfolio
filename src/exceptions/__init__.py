@@ -12,7 +12,9 @@ class ConfigValidationError(StochasticControlError):
 class NumericalInstabilityError(StochasticControlError):
     """Raised when a numerical scheme produces NaN, Inf, or violates stability bounds."""
 
-    def __init__(self, message: str, step: int | None = None, residual: float | None = None):
+    def __init__(
+        self, message: str, step: int | None = None, residual: float | None = None
+    ):
         self.step = step
         self.residual = residual
         detail = message
@@ -26,7 +28,12 @@ class NumericalInstabilityError(StochasticControlError):
 class SolverConvergenceError(StochasticControlError):
     """Raised when the HJB solver fails to converge within the specified tolerance."""
 
-    def __init__(self, message: str, iterations: int | None = None, final_residual: float | None = None):
+    def __init__(
+        self,
+        message: str,
+        iterations: int | None = None,
+        final_residual: float | None = None,
+    ):
         self.iterations = iterations
         self.final_residual = final_residual
         detail = message

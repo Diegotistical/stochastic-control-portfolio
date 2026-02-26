@@ -172,9 +172,7 @@ class ActorCritic(nn.Module):
         self.actor = Actor(obs_dim, action_dim, hidden_sizes)
         self.critic = Critic(obs_dim, hidden_sizes)
 
-    def forward(
-        self, obs: torch.Tensor
-    ) -> tuple[Dirichlet, torch.Tensor]:
+    def forward(self, obs: torch.Tensor) -> tuple[Dirichlet, torch.Tensor]:
         """Forward pass returning policy distribution and value."""
         dist = self.actor(obs)
         value = self.critic(obs)

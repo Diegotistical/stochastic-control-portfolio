@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class RobustnessResult:
     """Container for robustness test output."""
+
     perturbation_type: str
     perturbation_levels: NDArray[np.float64]
     baseline_metric: float
@@ -129,7 +130,9 @@ def test_regime_misspecification(
             for col in range(K):
                 if row != col:
                     Q_perturbed[row, col] = Q_true[row, col] * s
-            Q_perturbed[row, row] = -sum(Q_perturbed[row, j] for j in range(K) if j != row)
+            Q_perturbed[row, row] = -sum(
+                Q_perturbed[row, j] for j in range(K) if j != row
+            )
 
         policy = solve_fn(Q_perturbed)
         perturbed_metrics[i] = evaluate_fn(policy, Q_true)

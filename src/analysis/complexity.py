@@ -20,11 +20,12 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ComplexityResult:
     """Container for complexity analysis."""
+
     dimensions: NDArray[np.int64]
-    pde_grid_sizes: NDArray[np.float64]     # total grid points
-    pde_memory_mb: NDArray[np.float64]      # estimated memory usage
-    pde_flops: NDArray[np.float64]          # estimated FLOPs per step
-    rl_params: NDArray[np.float64]          # neural network parameters
+    pde_grid_sizes: NDArray[np.float64]  # total grid points
+    pde_memory_mb: NDArray[np.float64]  # estimated memory usage
+    pde_flops: NDArray[np.float64]  # estimated FLOPs per step
+    rl_params: NDArray[np.float64]  # neural network parameters
     rl_flops_per_step: NDArray[np.float64]  # forward pass FLOPs
 
 
@@ -63,7 +64,9 @@ def analyze_scaling(
         # PDE: state space = wealth × d portfolio weights × belief
         # Grid points: N^(d+1) (wealth × d alloc dims, simplified to N^d for allocation)
         # Plus 1 belief dimension
-        total_grid = float(n_grid_per_dim) ** (d + 1)  # wealth + d-1 allocations + belief
+        total_grid = float(n_grid_per_dim) ** (
+            d + 1
+        )  # wealth + d-1 allocations + belief
 
         pde_grid[i] = total_grid
         # Memory: 8 bytes per float64 × grid × (V + π + operators)

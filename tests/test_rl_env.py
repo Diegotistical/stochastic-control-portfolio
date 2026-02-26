@@ -14,8 +14,13 @@ class TestPortfolioEnv:
             sigma=np.array([[0.15, 0.20], [0.25, 0.35]]),
             correlation=np.array([[1.0, 0.5], [0.5, 1.0]]),
             Q=np.array([[-0.5, 0.5], [1.0, -1.0]]),
-            r=0.03, gamma=-2.0, T=1.0, n_steps=10,
-            transaction_cost=0.001, n_assets=2, seed=42,
+            r=0.03,
+            gamma=-2.0,
+            T=1.0,
+            n_steps=10,
+            transaction_cost=0.001,
+            n_assets=2,
+            seed=42,
         )
 
     def test_reset_shape(self, env):

@@ -25,8 +25,14 @@ class TestHJBSolver:
         Q = np.array([[0.0, 0.0], [0.0, 0.0]])
 
         params = HJBParams(
-            gamma=-2.0, r=0.03, mu=mu, sigma=sigma,
-            correlation=corr, Q=Q, transaction_cost=0.0, theta=0.0,
+            gamma=-2.0,
+            r=0.03,
+            mu=mu,
+            sigma=sigma,
+            correlation=corr,
+            Q=Q,
+            transaction_cost=0.0,
+            theta=0.0,
         )
 
         wg = WealthGrid(W_min=0.5, W_max=3.0, N=N_wealth, stretch=0.0)
@@ -35,8 +41,12 @@ class TestHJBSolver:
 
         model = HJBModel(params, grid)
         solver = HJBSolver(
-            model, grid, T=1.0, n_steps=n_time,
-            tol=1e-8, adaptive_dt=False,
+            model,
+            grid,
+            T=1.0,
+            n_steps=n_time,
+            tol=1e-8,
+            adaptive_dt=False,
         )
         return solver, grid
 
@@ -67,9 +77,7 @@ class TestHJBSolver:
         expected = np.power(W, gamma) / gamma
         expected_flat = grid.to_flat(expected)
 
-        np.testing.assert_allclose(
-            solution.V[-1], expected_flat, rtol=1e-10
-        )
+        np.testing.assert_allclose(solution.V[-1], expected_flat, rtol=1e-10)
 
     def test_value_function_negative_for_crra(self):
         """For gamma < 0, CRRA utility is negative."""
@@ -86,9 +94,9 @@ class TestHJBSolver:
         residuals = np.array(solution.residuals)
         early_mean = residuals[:10].mean()
         late_mean = residuals[-10:].mean()
-        assert late_mean <= early_mean * 5, (
-            f"Residuals not decreasing: early={early_mean:.2e}, late={late_mean:.2e}"
-        )
+        assert (
+            late_mean <= early_mean * 5
+        ), f"Residuals not decreasing: early={early_mean:.2e}, late={late_mean:.2e}"
 
     def test_merton_weights_sign_correct(self):
         """With positive excess returns, optimal weights should be positive."""

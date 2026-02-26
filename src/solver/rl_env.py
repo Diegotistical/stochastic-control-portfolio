@@ -64,6 +64,7 @@ class PortfolioEnv:
 
         self.chol = np.linalg.cholesky(self.corr)
         from scipy.linalg import expm
+
         self.P_dt = expm(self.Q * self.dt)
 
         self.rng = np.random.default_rng(seed)
@@ -138,13 +139,13 @@ class PortfolioEnv:
         sigma_k = self.sigma[self.regime]
         Z = self.rng.standard_normal(self.n_assets)
         dW = np.sqrt(self.dt) * (self.chol @ Z)
-        log_ret = (mu_k - 0.5 * sigma_k ** 2) * self.dt + sigma_k * dW
+        log_ret = (mu_k - 0.5 * sigma_k**2) * self.dt + sigma_k * dW
 
         # Portfolio return
         risky_ret = np.exp(log_ret) - 1
         rf_weight = 1 - self.weights.sum()
         portfolio_ret = rf_weight * self.r * self.dt + np.dot(self.weights, risky_ret)
-        self.wealth *= (1 + portfolio_ret)
+        self.wealth *= 1 + portfolio_ret
         self.wealth = max(self.wealth, 1e-10)
 
         # Update belief (simplified Wonham step)
@@ -172,12 +173,14 @@ class PortfolioEnv:
     def _get_obs(self) -> NDArray[np.float64]:
         """Construct observation vector."""
         time_remaining = 1.0 - self.step_count / self.n_steps
-        return np.concatenate([
-            [self.wealth],
-            self.weights,
-            self.belief,
-            [time_remaining],
-        ])
+        return np.concatenate(
+            [
+                [self.wealth],
+                self.weights,
+                self.belief,
+                [time_remaining],
+            ]
+        )
 
     def _utility(self, W: float) -> float:
         """CRRA utility."""
@@ -193,8 +196,10 @@ class PortfolioEnv:
             mu_k = self.mu[k]
             sigma_k = self.sigma[k]
             # Log-normal density (proportional)
-            residual = log_ret - (mu_k - 0.5 * sigma_k ** 2) * self.dt
-            likelihoods[k] = np.exp(-0.5 * np.sum(residual ** 2 / (sigma_k ** 2 * self.dt + 1e-30)))
+            residual = log_ret - (mu_k - 0.5 * sigma_k**2) * self.dt
+            likelihoods[k] = np.exp(
+                -0.5 * np.sum(residual**2 / (sigma_k**2 * self.dt + 1e-30))
+            )
 
         # Bayes' update
         p_pred = self.P_dt.T @ self.belief  # prediction step

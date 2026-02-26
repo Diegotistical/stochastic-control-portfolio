@@ -19,20 +19,22 @@ from numpy.typing import NDArray
 
 
 # --- Style configuration ---
-plt.rcParams.update({
-    "figure.figsize": (10, 6),
-    "figure.dpi": 150,
-    "font.family": "serif",
-    "font.size": 11,
-    "axes.titlesize": 13,
-    "axes.labelsize": 12,
-    "legend.fontsize": 10,
-    "xtick.labelsize": 10,
-    "ytick.labelsize": 10,
-    "lines.linewidth": 1.5,
-    "axes.grid": True,
-    "grid.alpha": 0.3,
-})
+plt.rcParams.update(
+    {
+        "figure.figsize": (10, 6),
+        "figure.dpi": 150,
+        "font.family": "serif",
+        "font.size": 11,
+        "axes.titlesize": 13,
+        "axes.labelsize": 12,
+        "legend.fontsize": 10,
+        "xtick.labelsize": 10,
+        "ytick.labelsize": 10,
+        "lines.linewidth": 1.5,
+        "axes.grid": True,
+        "grid.alpha": 0.3,
+    }
+)
 
 
 def plot_value_surface(
@@ -120,16 +122,29 @@ def plot_no_trade_region(
 
     # Show deviation from Merton
     deviation = pi_star - pi_merton
-    im = ax.pcolormesh(p_grid, W, deviation, cmap="coolwarm", shading="auto",
-                       norm=Normalize(vmin=-0.3, vmax=0.3))
+    im = ax.pcolormesh(
+        p_grid,
+        W,
+        deviation,
+        cmap="coolwarm",
+        shading="auto",
+        norm=Normalize(vmin=-0.3, vmax=0.3),
+    )
     ax.set_xlabel("Belief p (P[bull])")
     ax.set_ylabel("Wealth W")
     ax.set_title("No-Trade Region (deviation from Merton)")
     fig.colorbar(im, ax=ax, label="π* − π_Merton")
 
     # Overlay no-trade boundary as contour
-    ax.contour(p_grid, W, np.abs(deviation), levels=[0.01], colors="black",
-               linewidths=2, linestyles="--")
+    ax.contour(
+        p_grid,
+        W,
+        np.abs(deviation),
+        levels=[0.01],
+        colors="black",
+        linewidths=2,
+        linestyles="--",
+    )
 
     if save_path:
         fig.savefig(save_path, bbox_inches="tight")
@@ -146,7 +161,9 @@ def plot_benchmark_comparison(
     ----------
     results : dict mapping strategy_name → {"wealth": array, "dates": list, "metrics": dict}
     """
-    fig, axes = plt.subplots(2, 1, figsize=(12, 10), gridspec_kw={"height_ratios": [3, 1]})
+    fig, axes = plt.subplots(
+        2, 1, figsize=(12, 10), gridspec_kw={"height_ratios": [3, 1]}
+    )
 
     # Equity curves
     ax1 = axes[0]
@@ -169,14 +186,16 @@ def plot_benchmark_comparison(
         table_data = []
         for name, data in results.items():
             m = data.get("metrics", {})
-            table_data.append([
-                name,
-                f"{m.get('annualised_return', 0):.2%}",
-                f"{m.get('annualised_volatility', 0):.2%}",
-                f"{m.get('sharpe_ratio', 0):.2f}",
-                f"{m.get('max_drawdown', 0):.2%}",
-                f"{m.get('sortino_ratio', 0):.2f}",
-            ])
+            table_data.append(
+                [
+                    name,
+                    f"{m.get('annualised_return', 0):.2%}",
+                    f"{m.get('annualised_volatility', 0):.2%}",
+                    f"{m.get('sharpe_ratio', 0):.2f}",
+                    f"{m.get('max_drawdown', 0):.2%}",
+                    f"{m.get('sortino_ratio', 0):.2f}",
+                ]
+            )
 
         table = ax2.table(
             cellText=table_data,
@@ -238,8 +257,12 @@ def plot_filter_accuracy(
 
     # True regime (stepped)
     T_reg = min(len(true_regimes), T)
-    ax2.fill_between(times[:T_reg], true_regimes[:T_reg], alpha=0.3, color="gray", step="post")
-    ax2.step(times[:T_reg], true_regimes[:T_reg], color="black", where="post", linewidth=1)
+    ax2.fill_between(
+        times[:T_reg], true_regimes[:T_reg], alpha=0.3, color="gray", step="post"
+    )
+    ax2.step(
+        times[:T_reg], true_regimes[:T_reg], color="black", where="post", linewidth=1
+    )
     ax2.set_ylabel("True Regime")
     ax2.set_xlabel("Time")
     ax2.set_title("True Regime Path")
@@ -280,8 +303,22 @@ def plot_complexity_scaling(
     """Plot PDE vs RL computational scaling."""
     fig, ax = plt.subplots(figsize=(10, 6))
 
-    ax.semilogy(dimensions, pde_flops, "o-", color="firebrick", label="PDE (Finite Differences)", markersize=8)
-    ax.semilogy(dimensions, rl_flops, "s-", color="steelblue", label="Deep RL (Forward Pass)", markersize=8)
+    ax.semilogy(
+        dimensions,
+        pde_flops,
+        "o-",
+        color="firebrick",
+        label="PDE (Finite Differences)",
+        markersize=8,
+    )
+    ax.semilogy(
+        dimensions,
+        rl_flops,
+        "s-",
+        color="steelblue",
+        label="Deep RL (Forward Pass)",
+        markersize=8,
+    )
 
     ax.set_xlabel("Number of Assets (d)")
     ax.set_ylabel("FLOPs per Step")
@@ -308,8 +345,22 @@ def plot_robust_comparison(
     x = np.arange(len(labels))
     width = 0.35
 
-    ax.bar(x - width / 2, pi_standard, width, label="Standard", color="steelblue", alpha=0.8)
-    ax.bar(x + width / 2, pi_robust, width, label="Robust (Ambiguity-Averse)", color="firebrick", alpha=0.8)
+    ax.bar(
+        x - width / 2,
+        pi_standard,
+        width,
+        label="Standard",
+        color="steelblue",
+        alpha=0.8,
+    )
+    ax.bar(
+        x + width / 2,
+        pi_robust,
+        width,
+        label="Robust (Ambiguity-Averse)",
+        color="firebrick",
+        alpha=0.8,
+    )
 
     ax.set_xlabel("Asset")
     ax.set_ylabel("Optimal Weight π*")

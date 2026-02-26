@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class TrainingMetrics:
     """Container for training statistics."""
+
     episode_rewards: list[float] = field(default_factory=list)
     policy_losses: list[float] = field(default_factory=list)
     value_losses: list[float] = field(default_factory=list)
@@ -94,7 +95,9 @@ class PPOTrainer:
 
         self.metrics = TrainingMetrics()
 
-    def train(self, n_episodes: int, rollout_length: int | None = None) -> TrainingMetrics:
+    def train(
+        self, n_episodes: int, rollout_length: int | None = None
+    ) -> TrainingMetrics:
         """Run PPO training.
 
         Parameters
@@ -128,7 +131,9 @@ class PPOTrainer:
 
             # Track metrics
             mean_reward = rollout["rewards"].sum(axis=1).mean()
-            mean_wealth = np.mean([info.get("wealth", 1.0) for info in rollout["infos"][-1]])
+            mean_wealth = np.mean(
+                [info.get("wealth", 1.0) for info in rollout["infos"][-1]]
+            )
 
             self.metrics.episode_rewards.append(float(mean_reward))
             self.metrics.policy_losses.append(float(policy_loss))
@@ -182,24 +187,22 @@ class PPOTrainer:
 
         # Final value for bootstrapping
         with torch.no_grad():
-            final_value = self.model.critic(
-                torch.FloatTensor(obs).to(self.device)
-            ).cpu().numpy()
+            final_value = (
+                self.model.critic(torch.FloatTensor(obs).to(self.device)).cpu().numpy()
+            )
 
         return {
-            "obs": np.array(obs_list),           # (T, n_envs, obs_dim)
-            "actions": np.array(action_list),     # (T, n_envs, action_dim+1)
-            "rewards": np.array(reward_list),     # (T, n_envs)
-            "log_probs": np.array(log_prob_list), # (T, n_envs)
-            "values": np.array(value_list),       # (T, n_envs)
-            "dones": np.array(done_list),         # (T, n_envs)
-            "final_value": final_value,           # (n_envs,)
+            "obs": np.array(obs_list),  # (T, n_envs, obs_dim)
+            "actions": np.array(action_list),  # (T, n_envs, action_dim+1)
+            "rewards": np.array(reward_list),  # (T, n_envs)
+            "log_probs": np.array(log_prob_list),  # (T, n_envs)
+            "values": np.array(value_list),  # (T, n_envs)
+            "dones": np.array(done_list),  # (T, n_envs)
+            "final_value": final_value,  # (n_envs,)
             "infos": info_list,
         }
 
-    def _compute_gae(
-        self, rollout: dict
-    ) -> tuple[NDArray, NDArray]:
+    def _compute_gae(self, rollout: dict) -> tuple[NDArray, NDArray]:
         """Compute Generalized Advantage Estimation."""
         T = rollout["rewards"].shape[0]
         n_envs = rollout["rewards"].shape[1]
@@ -235,21 +238,17 @@ class PPOTrainer:
         batch_size = T * n_envs
 
         # Flatten
-        obs_flat = torch.FloatTensor(
-            rollout["obs"].reshape(batch_size, -1)
-        ).to(self.device)
-        actions_flat = torch.FloatTensor(
-            rollout["actions"].reshape(batch_size, -1)
-        ).to(self.device)
-        old_log_probs = torch.FloatTensor(
-            rollout["log_probs"].reshape(batch_size)
-        ).to(self.device)
-        adv_flat = torch.FloatTensor(
-            advantages.reshape(batch_size)
-        ).to(self.device)
-        ret_flat = torch.FloatTensor(
-            returns.reshape(batch_size)
-        ).to(self.device)
+        obs_flat = torch.FloatTensor(rollout["obs"].reshape(batch_size, -1)).to(
+            self.device
+        )
+        actions_flat = torch.FloatTensor(rollout["actions"].reshape(batch_size, -1)).to(
+            self.device
+        )
+        old_log_probs = torch.FloatTensor(rollout["log_probs"].reshape(batch_size)).to(
+            self.device
+        )
+        adv_flat = torch.FloatTensor(advantages.reshape(batch_size)).to(self.device)
+        ret_flat = torch.FloatTensor(returns.reshape(batch_size)).to(self.device)
 
         # Normalise advantages
         adv_flat = (adv_flat - adv_flat.mean()) / (adv_flat.std() + 1e-8)
@@ -267,14 +266,19 @@ class PPOTrainer:
             # Policy loss (clipped)
             ratio = torch.exp(new_log_probs - old_log_probs)
             surr1 = ratio * adv_flat
-            surr2 = torch.clamp(ratio, 1 - self.clip_epsilon, 1 + self.clip_epsilon) * adv_flat
+            surr2 = (
+                torch.clamp(ratio, 1 - self.clip_epsilon, 1 + self.clip_epsilon)
+                * adv_flat
+            )
             policy_loss = -torch.min(surr1, surr2).mean()
 
             # Value loss
             value_loss = nn.functional.mse_loss(values, ret_flat)
 
             # Total loss
-            loss = policy_loss + self.value_coef * value_loss - self.entropy_coef * entropy
+            loss = (
+                policy_loss + self.value_coef * value_loss - self.entropy_coef * entropy
+            )
 
             self.optimizer.zero_grad()
             loss.backward()
@@ -291,12 +295,15 @@ class PPOTrainer:
     def _save_checkpoint(self, update: int) -> None:
         """Save model checkpoint."""
         path = self.checkpoint_dir / f"checkpoint_{update}.pt"
-        torch.save({
-            "model_state_dict": self.model.state_dict(),
-            "optimizer_state_dict": self.optimizer.state_dict(),
-            "update": update,
-            "metrics": self.metrics,
-        }, path)
+        torch.save(
+            {
+                "model_state_dict": self.model.state_dict(),
+                "optimizer_state_dict": self.optimizer.state_dict(),
+                "update": update,
+                "metrics": self.metrics,
+            },
+            path,
+        )
         logger.info(f"Checkpoint saved: {path}")
 
     def load_checkpoint(self, path: str) -> None:

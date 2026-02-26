@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SensitivityResult:
     """Container for sensitivity analysis output."""
+
     param_names: list[str]
     param_values: dict[str, NDArray[np.float64]]
     metric_name: str
@@ -99,6 +100,7 @@ def run_sensitivity_2d(
 
 
 # --- Common parameter grids ---
+
 
 def default_gamma_grid() -> NDArray[np.float64]:
     """Risk aversion parameter sweep."""

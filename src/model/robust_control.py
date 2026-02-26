@@ -25,11 +25,12 @@ from numpy.typing import NDArray
 @dataclass
 class RobustControlResult:
     """Container for robust control analysis."""
-    pi_standard: NDArray[np.float64]    # standard optimal control
-    pi_robust: NDArray[np.float64]      # robust optimal control
-    h_worst: NDArray[np.float64]        # worst-case distortion
-    value_standard: NDArray[np.float64] # standard value function
-    value_robust: NDArray[np.float64]   # robust value function
+
+    pi_standard: NDArray[np.float64]  # standard optimal control
+    pi_robust: NDArray[np.float64]  # robust optimal control
+    h_worst: NDArray[np.float64]  # worst-case distortion
+    value_standard: NDArray[np.float64]  # standard value function
+    value_robust: NDArray[np.float64]  # robust value function
     exposure_reduction: NDArray[np.float64]  # |π_robust| / |π_standard|
 
 
@@ -136,7 +137,7 @@ class RobustController:
         pi_robust : (..., d) robust optimal weights
         """
         excess = mu - self.r
-        vol_sq = sigma ** 2
+        vol_sq = sigma**2
 
         # Standard denominator: -V_xx/V_x * vol_sq = (1-gamma) * vol_sq for CRRA
         denom_standard = -(V_xx / (V_x + 1e-30))[..., None] * vol_sq
@@ -168,7 +169,7 @@ class RobustController:
         pi_standard, pi_robust : (d,) arrays
         """
         excess = mu - self.r
-        vol_sq = sigma ** 2
+        vol_sq = sigma**2
         gamma = self.gamma
 
         pi_standard = excess / ((1 - gamma) * vol_sq)
@@ -194,4 +195,4 @@ class RobustController:
         -------
         penalty : (...,) scalar penalty per grid point
         """
-        return 0.5 * self.theta * np.sum(h ** 2, axis=-1)
+        return 0.5 * self.theta * np.sum(h**2, axis=-1)
